@@ -1,37 +1,60 @@
 const pool = require("../config");
+const fs = require("fs").promises;
 const { v4: uuidV4 } = require("uuid");
 const nodemailer = require("nodemailer");
-const createEmailTemplate = require("./createEmailTemplate");
-const lggger = require("../logs/logger");
+const logger = require("../logs/logger");
+const { returnJSON } = require("../utils/normalizeReturn");
+const path = require("path");
+const { default: axios } = require("axios");
 const registerEmail = async (email) => {
-  const conn = await pool.getConnection();
+  let conn;
   try {
+    conn = await pool.getConnection();
+    await conn.beginTransaction();
     let sql = "";
     sql = "SELECT * FROM emails WHERE email = ?";
     const [rows] = await conn.query(sql, [email]);
     if (rows.length) {
-      return { status: 400, msg: "duplicate", insertId: null };
+      await conn.rollback();
+      return returnJSON(1, {
+        msg: "duplicate",
+      });
     }
 
     sql = "INSERT INTO emails (email, uuid) VALUES(?,?)";
     const uuid = uuidV4();
     const [result] = await conn.execute(sql, [email, uuid]);
+    logger.info("[record added]");
     if (result.insertId) {
-      const html = createEmailTemplate({ uuid });
-      const envelope = await sendMail({
+      const { FRONT_URL } = process.env;
+      const template = await fs.readFile(
+        path.join(__dirname, "../templates/emailTemplate.html"),
+        "utf8"
+      );
+      let html = template.replace(/UUID/g, uuid);
+      html = html.replace(/APIURL/g, FRONT_URL);
+      await conn.commit();
+      // await axios.post(`https://admission.chmsu.edu.ph/api/sendEmail.php`, {
+      //   email,
+      //   uuid,
+      // });
+      await sendMail({
         to: email,
-        subject: "Admission",
+        subject: "CHMSU Admission AY 2024-2025",
         html,
       });
 
-      console.log("[env]", envelope);
-      return { status: 200, msg: "success", insertId: result.insertId };
+      return returnJSON(1, {
+        insertId: result.insertId,
+      });
     }
-    return { status: 400, msg: "no insertId", insertId: null };
   } catch (error) {
-    return { status: 400, msg: `[registerEmail]: ${error}`, insertId: null };
+    await conn.rollback();
+    return returnJSON(0, {
+      error: `[registerEmail]: ${error}`,
+    });
   } finally {
-    conn.release();
+    if (conn) conn.release();
   }
 };
 
@@ -55,15 +78,42 @@ const sendMail = async (mailContent) => {
       text,
       html,
     };
-
-    const envelope = await transporter.sendMail(mailOptions);
-    logger.info("[env]", envelope);
+    transporter.verify((err, success) => {
+      if (err) logger.error("[sendMail]", err);
+      logger.info("[sendMail success]", success);
+    });
+    await transporter.sendMail(mailOptions);
   } catch (error) {
     console.log(`${error}`);
   }
 };
 
+const getEmailByCode = async (code) => {
+  const conn = await pool.getConnection();
+  try {
+    let sql = "";
+    sql = "SELECT * FROM emails WHERE uuid = ?";
+    const [rows] = await conn.query(sql, [code]);
+    if (!Boolean(rows.length)) {
+      return returnJSON(1, {
+        msg: "noemail",
+      });
+    }
+    const row = rows[0];
+    return returnJSON(1, {
+      email: row.email,
+    });
+  } catch (error) {
+    logger.error("[getEmailByCode]", error);
+    return returnJSON(0, {
+      error,
+    });
+  } finally {
+    conn.release();
+  }
+};
+
 module.exports = {
   registerEmail,
-  sendMail,
+  getEmailByCode,
 };

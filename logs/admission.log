@@ -1,0 +1,58 @@
+[2024-02-12T19:14:17.426] [INFO] default - [record added]
+[2024-02-12T19:14:19.991] [INFO] default - [sendMail success] true
+[2024-02-12T19:16:41.567] [INFO] default - [record added]
+[2024-02-12T19:16:43.180] [INFO] default - [sendMail success] true
+[2024-02-12T19:18:04.794] [INFO] default - [submitEntry] undefined
+[2024-02-12T19:51:41.195] [INFO] default - [record added]
+[2024-02-12T19:51:44.696] [INFO] default - [sendMail success] true
+[2024-02-12T19:52:52.185] [INFO] default - [submitEntry] {
+  "slotID": "TAL0318-1",
+  "timeSlot": "9:00 AM",
+  "venue": "TBA",
+  "campus": "Talisay"
+}
+[2024-02-12T19:52:52.185] [ERROR] default - [submitEntry] ReferenceError: result is not defined
+    at module.exports.submitEntry (/Users/motch/Documents/CHMSU/admission_api/handlers/entry.js:136:5)
+    at processTicksAndRejections (node:internal/process/task_queues:96:5)
+    at async /Users/motch/Documents/CHMSU/admission_api/routes/index.js:24:18
+[2024-02-12T19:54:19.153] [INFO] default - [submitEntry] {
+  "slotID": "TAL0318-1",
+  "timeSlot": "9:00 AM",
+  "venue": "TBA",
+  "campus": "Talisay"
+}
+[2024-02-12T19:56:50.161] [INFO] default - [submitEntry] {
+  "slotID": "TAL0318-1",
+  "timeSlot": "9:00 AM",
+  "venue": "TBA",
+  "campus": "Talisay"
+}
+[2024-02-12T19:59:22.481] [INFO] default - [submitEntry] {
+  "slotID": "TAL0318-1",
+  "timeSlot": "9:00 AM",
+  "venue": "TBA",
+  "campus": "Talisay"
+}
+[2024-02-12T21:11:21.477] [INFO] default - [record added]
+[2024-02-12T21:11:22.610] [ERROR] default - [sendMail] Error: getaddrinfo ENOTFOUND mail.chmsu.edu.ph
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26) {
+  errno: -3008,
+  code: 'EDNS',
+  syscall: 'getaddrinfo',
+  hostname: 'mail.chmsu.edu.ph',
+  command: 'CONN'
+}
+[2024-02-12T21:11:22.611] [INFO] default - [sendMail success] undefined
+[2024-02-12T21:12:28.679] [INFO] default - [record added]
+[2024-02-12T21:12:28.705] [ERROR] default - [sendMail] Error: getaddrinfo ENOTFOUND mail.chmsu.edu.ph
+    at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:120:26) {
+  errno: -3008,
+  code: 'EDNS',
+  syscall: 'getaddrinfo',
+  hostname: 'mail.chmsu.edu.ph',
+  command: 'CONN'
+}
+[2024-02-12T21:12:28.707] [INFO] default - [sendMail success] undefined
+[2024-02-12T21:49:39.365] [INFO] default - [record added]
+[2024-02-12T22:06:49.331] [INFO] default - [record added]
+[2024-02-12T22:07:57.738] [INFO] default - [record added]

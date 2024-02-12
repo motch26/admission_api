@@ -1,3 +1,7 @@
 /Archive.zip
 /admission.log
 /node_modules
+public/uploads/ID/*
+public/uploads/picture/*
+.env
+.DS_Store
