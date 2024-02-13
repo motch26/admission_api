@@ -126,21 +126,48 @@ const selectSlot = async (formData) => {
     if (conn) conn.release();
   }
 };
-
-module.exports.submitEntry = async (formData, files) => {
+const checkDuplicate = async (formData) => {
+  const { lrn, lastName, givenName } = formData;
+  const conn = await pool.getConnection();
   try {
-    const slot = await selectSlot(formData);
-
-    if (slot.slotID) {
-      await compressFiles(files);
-      await saveData(formData, slot.slotID);
+    const { email } = formData;
+    let sql = `SELECT * FROM entries WHERE LOWER(LRN) = LOWER(?) AND LOWER(givenName) = LOWER(?) AND LOWER(lastName) = LOWER(?)`;
+    const [rows] = await conn.query(sql, [lrn, givenName, lastName]);
+    if (rows.length) {
       return returnJSON(1, {
-        slot,
+        msg: "duplicate",
       });
     } else {
-      // no slots available
+      return returnJSON(1, {
+        msg: "noDuplicate",
+      });
+    }
+  } catch (error) {
+    logger.error("[checkDuplicate]", error);
+    return returnJSON(0, {
+      error: `[checkDuplicate]: ${error}`,
+    });
+  } finally {
+    conn.release();
+  }
+};
+module.exports.submitEntry = async (formData, files) => {
+  try {
+    const duplicate = await checkDuplicate(formData);
+    logger.info("[submitEntry]", duplicate);
+    if (duplicate.msg === "duplicate") {
+      return duplicate;
+    }
+    const slot = await selectSlot(formData);
+    if (slot.msg === "noSlot") {
       return slot;
     }
+
+    await compressFiles(files);
+    await saveData(formData, slot.slotID);
+    return returnJSON(1, {
+      slot,
+    });
   } catch (error) {
     logger.error("[submitEntry]", error);
     return returnJSON(0, {
@@ -204,9 +231,10 @@ module.exports.getEntryInfo = async (code) => {
       });
     }
   } catch (error) {
-    logger.error("[getEntryInfo]", error);
+    if (error)
+      logger.error("[getEntryInfo]", JSON.stringify(error, undefined, 4));
     return returnJSON(0, {
-      error: `[getEntryInfo]: ${error}`,
+      error: `[getEntryInfo]: ${error.message}`,
     });
   } finally {
     if (conn) conn.release();

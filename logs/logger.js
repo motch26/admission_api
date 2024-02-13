@@ -1,12 +1,24 @@
-const log4js = require("log4js");
-log4js.configure({
-  appenders: {
-    console: { type: "console" },
-    file: { type: "file", filename: "./logs/admission.log" },
-  },
-  categories: {
-    default: { appenders: ["console", "file"], level: "info" },
-  },
-});
+const winston = require("winston");
 
-module.exports = log4js.getLogger();
+module.exports = winston.createLogger({
+  level: "info",
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.printf((info) => {
+      let { timestamp, level, message, ...args } = info;
+
+      // If message is an object, convert it to pretty JSON
+      if (typeof message === "object") {
+        message = JSON.stringify(message, null, 2);
+      }
+
+      return `${timestamp} [${level}]: ${message} ${
+        Object.keys(args).length ? JSON.stringify(args, null, 2) : ""
+      }`;
+    })
+  ),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: "logs/admission.log" }),
+  ],
+});

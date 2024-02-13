@@ -24,28 +24,28 @@ const registerEmail = async (email) => {
     sql = "INSERT INTO emails (email, uuid) VALUES(?,?)";
     const uuid = uuidV4();
     const [result] = await conn.execute(sql, [email, uuid]);
-    logger.info("[record added]");
     if (result.insertId) {
-      const { FRONT_URL } = process.env;
-      const template = await fs.readFile(
-        path.join(__dirname, "../templates/emailTemplate.html"),
-        "utf8"
-      );
-      let html = template.replace(/UUID/g, uuid);
-      html = html.replace(/APIURL/g, FRONT_URL);
+      // const { FRONT_URL } = process.env;
+      // const template = await fs.readFile(
+      //   path.join(__dirname, "../templates/emailTemplate.html"),
+      //   "utf8"
+      // );
+      // let html = template.replace(/UUID/g, uuid);
+      // html = html.replace(/APIURL/g, FRONT_URL);
       await conn.commit();
-      // await axios.post(`https://admission.chmsu.edu.ph/api/sendEmail.php`, {
-      //   email,
-      //   uuid,
+      // // await axios.post(`https://admission.chmsu.edu.ph/api/sendEmail.php`, {
+      // //   email,
+      // //   uuid,
+      // // });
+      // await sendMail({
+      //   to: email,
+      //   subject: "CHMSU Admission AY 2024-2025",
+      //   html,
       // });
-      await sendMail({
-        to: email,
-        subject: "CHMSU Admission AY 2024-2025",
-        html,
-      });
 
       return returnJSON(1, {
         insertId: result.insertId,
+        uuid,
       });
     }
   } catch (error) {

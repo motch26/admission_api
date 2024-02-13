@@ -3,5 +3,7 @@
 /node_modules
 public/uploads/ID/*
 public/uploads/picture/*
+
+/.DS_Store
+/*.zip
 .env
-.DS_Store
