@@ -3,7 +3,8 @@
 /node_modules
 public/uploads/ID/*
 public/uploads/picture/*
-
 /.DS_Store
 /*.zip
 .env
+logs/admission.log
+templates/emailTemplate.html

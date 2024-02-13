@@ -25,18 +25,19 @@ const registerEmail = async (email) => {
     const uuid = uuidV4();
     const [result] = await conn.execute(sql, [email, uuid]);
     if (result.insertId) {
-      // const { FRONT_URL } = process.env;
+      const { FRONT_URL } = process.env;
+      await axios.post(`https://admission.chmsu.edu.ph/api/sendEmail.php`, {
+        email,
+        uuid,
+        frontURL: FRONT_URL,
+      });
+      await conn.commit();
       // const template = await fs.readFile(
       //   path.join(__dirname, "../templates/emailTemplate.html"),
       //   "utf8"
       // );
       // let html = template.replace(/UUID/g, uuid);
       // html = html.replace(/APIURL/g, FRONT_URL);
-      await conn.commit();
-      // // await axios.post(`https://admission.chmsu.edu.ph/api/sendEmail.php`, {
-      // //   email,
-      // //   uuid,
-      // // });
       // await sendMail({
       //   to: email,
       //   subject: "CHMSU Admission AY 2024-2025",
@@ -50,6 +51,7 @@ const registerEmail = async (email) => {
     }
   } catch (error) {
     await conn.rollback();
+    logger.error({ ...error, from: "[registerEmail]" });
     return returnJSON(0, {
       error: `[registerEmail]: ${error}`,
     });
@@ -79,8 +81,8 @@ const sendMail = async (mailContent) => {
       html,
     };
     transporter.verify((err, success) => {
-      if (err) logger.error("[sendMail]", err);
-      logger.info("[sendMail success]", success);
+      if (err) logger.error({ err, from: "[sendMail]" });
+      logger.info("[sendMail success]");
     });
     await transporter.sendMail(mailOptions);
   } catch (error) {

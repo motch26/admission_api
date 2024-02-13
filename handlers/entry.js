@@ -127,12 +127,11 @@ const selectSlot = async (formData) => {
   }
 };
 const checkDuplicate = async (formData) => {
-  const { lrn, lastName, givenName } = formData;
+  const { lastName, givenName } = formData;
   const conn = await pool.getConnection();
   try {
-    const { email } = formData;
-    let sql = `SELECT * FROM entries WHERE LOWER(LRN) = LOWER(?) AND LOWER(givenName) = LOWER(?) AND LOWER(lastName) = LOWER(?)`;
-    const [rows] = await conn.query(sql, [lrn, givenName, lastName]);
+    let sql = `SELECT * FROM entries WHERE LOWER(givenName) = LOWER(?) AND LOWER(lastName) = LOWER(?)`;
+    const [rows] = await conn.query(sql, [givenName, lastName]);
     if (rows.length) {
       return returnJSON(1, {
         msg: "duplicate",
@@ -154,7 +153,6 @@ const checkDuplicate = async (formData) => {
 module.exports.submitEntry = async (formData, files) => {
   try {
     const duplicate = await checkDuplicate(formData);
-    logger.info("[submitEntry]", duplicate);
     if (duplicate.msg === "duplicate") {
       return duplicate;
     }
