@@ -25,7 +25,8 @@ const compressFiles = async (files) => {
     logger.error("[compressFiles]", error);
   }
 };
-const saveData = async (formData, slotID) => {
+const saveData = async (formData, slot) => {
+  const { slotID, entryPosition } = slot;
   const conn = await pool.getConnection();
   try {
     const {
@@ -44,8 +45,8 @@ const saveData = async (formData, slotID) => {
     let sql = "";
     sql = `INSERT INTO 
                   entries(LRN, givenName,middleName, lastName, sexAtBirth, birthDate,
-                  phoneNumber, email, campus, program, examCenter, slotID)
-                  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  phoneNumber, email, campus, program, examCenter, slotID, entryPosition)
+                  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `;
     let values = [];
     values = [
@@ -61,6 +62,7 @@ const saveData = async (formData, slotID) => {
       program,
       examCenter,
       slotID,
+      entryPosition,
     ];
     await conn.execute(sql, values);
   } catch (error) {
@@ -96,11 +98,14 @@ const selectSlot = async (formData) => {
     let sql = `SELECT * FROM slots WHERE slotID LIKE '${code}%' AND slotsLeft != 0 ORDER BY slotID ASC LIMIT 1 `;
     let [rows] = await conn.query(sql);
     if (rows.length) {
-      const { slotID, timeSlot, venueID } = rows[0];
+      const { slotID, timeSlot, venueID, slotsLeft } = rows[0];
       const slot = {
         slotID,
         timeSlot,
       };
+
+      const entryPosition = 101 - parseInt(slotsLeft);
+      slot.entryPosition = entryPosition;
 
       sql = `SELECT venue, campus FROM venues WHERE venueID = ?`;
       [rows] = await conn.query(sql, [venueID]);
@@ -162,7 +167,7 @@ module.exports.submitEntry = async (formData, files) => {
     }
 
     await compressFiles(files);
-    await saveData(formData, slot.slotID);
+    await saveData(formData, slot);
     return returnJSON(1, {
       slot,
     });
