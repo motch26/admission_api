@@ -8,25 +8,21 @@ const dayjs = require("dayjs");
 const compressFiles = async (files) => {
   try {
     const picture = files.picture[0];
-    const ID = files.ID[0];
     const compressedPicture = await sharp(picture.path)
       .png({ quality: 50 })
       .toBuffer();
-    const compressedID = await sharp(ID.path).png({ quality: 50 }).toBuffer();
 
     await fs.writeFile(
       `public/uploads/picture/${picture.filename}`,
       compressedPicture
     );
     await fs.unlink(`tmp/picture/${picture.filename}`);
-    await fs.writeFile(`public/uploads/ID/${ID.filename}`, compressedID);
-    await fs.unlink(`tmp/ID/${ID.filename}`);
   } catch (error) {
     logger.error("[compressFiles]", error);
   }
 };
 const saveData = async (formData, slot) => {
-  const { slotID, entryPosition } = slot;
+  const { slotID } = slot;
   const conn = await pool.getConnection();
   try {
     const {
@@ -45,8 +41,8 @@ const saveData = async (formData, slot) => {
     let sql = "";
     sql = `INSERT INTO 
                   entries(LRN, givenName,middleName, lastName, sexAtBirth, birthDate,
-                  phoneNumber, email, campus, program, examCenter, slotID, entryPosition)
-                  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  phoneNumber, email, campus, program, examCenter, slotID)
+                  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `;
     let values = [];
     values = [
@@ -62,7 +58,6 @@ const saveData = async (formData, slot) => {
       program,
       examCenter,
       slotID,
-      entryPosition,
     ];
     await conn.execute(sql, values);
   } catch (error) {
@@ -103,9 +98,6 @@ const selectSlot = async (formData) => {
         slotID,
         timeSlot,
       };
-
-      const entryPosition = 101 - parseInt(slotsLeft);
-      slot.entryPosition = entryPosition;
 
       sql = `SELECT venue, campus FROM venues WHERE venueID = ?`;
       [rows] = await conn.query(sql, [venueID]);
