@@ -3,7 +3,12 @@ const { registerEmail, getEmailByCode } = require("../handlers/email");
 const router = express.Router();
 const upload = require("../utils/multer");
 var logger = require("../logs/logger");
-const { submitEntry, getEntryInfo } = require("../handlers/entry");
+const {
+  submitEntry,
+  getEntryInfo,
+  getEntries,
+  editEntry,
+} = require("../handlers/entry");
 
 router.post("/registerUser", async (req, res, next) => {
   const { email } = req.body;
@@ -11,12 +16,6 @@ router.post("/registerUser", async (req, res, next) => {
   if (resp.status === 200) res.json(resp).status(resp.status);
   else next(resp.error);
 });
-// router.get("/getEmailByCode", async (req, res, next) => {
-//   const { code } = req.query;
-//   const resp = await getEmailByCode(code);
-//   if (resp.status === 200) res.json(resp).status(resp.status);
-//   else next(resp.error);
-// });
 router.post(
   "/submitEntry",
   upload.fields([{ name: "picture" }, { name: "ID" }]),
@@ -33,4 +32,15 @@ router.get("/getEntryInfo", async (req, res, next) => {
   else next(resp.error);
 });
 
+router.get("/getEntries", async (req, res, next) => {
+  const { campus } = req.query;
+  const resp = await getEntries(campus);
+  if (resp.status === 200) res.json(resp).status(resp.status);
+  else next(resp.error);
+});
+router.post("/editEntry", async (req, res, next) => {
+  const resp = await editEntry(req.body);
+  if (resp.status === 200) res.json(resp).status(resp.status);
+  else next(resp.error);
+});
 module.exports = router;

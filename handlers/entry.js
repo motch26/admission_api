@@ -235,3 +235,49 @@ module.exports.getEntryInfo = async (code) => {
     if (conn) conn.release();
   }
 };
+
+module.exports.getEntries = async (campus) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    let sql = `SELECT entries.*, slots.timeSlot, emails.uuid FROM entries 
+                                                INNER JOIN slots USING(slotID) 
+                                                INNER JOIN emails USING(email)
+              WHERE examCenter = ? ORDER BY slotID ASC, lastName ASC, givenName ASC`;
+    let [rows] = await conn.query(sql, [campus]);
+    return returnJSON(1, {
+      entries: rows,
+    });
+  } catch (error) {
+    logger.error("[getEntries]", error);
+    return returnJSON(0, {
+      error: `[getEntries]: ${error.message}`,
+    });
+  } finally {
+    if (conn) conn.release();
+  }
+};
+module.exports.editEntry = async (body) => {
+  const { email, slotID } = body;
+  let conn;
+  try {
+    conn = await pool.getConnection();
+
+    let sql = `UPDATE slots SET slotsLeft = slotsLeft + 1 WHERE slotID = ?`;
+    await conn.execute(sql, [slotID]);
+
+    sql = `UPDATE entries SET isReserved = 0 WHERE email = ?`;
+    await conn.query(sql, [email]);
+
+    return returnJSON(1, {
+      msg: "updated",
+    });
+  } catch (error) {
+    logger.error("[editEntry]", error);
+    return returnJSON(0, {
+      error: `[editEntry]: ${error.message}`,
+    });
+  } finally {
+    if (conn) conn.release();
+  }
+};
