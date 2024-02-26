@@ -9,46 +9,32 @@ const { default: axios } = require("axios");
 const registerEmail = async (email) => {
   let conn;
   try {
-    conn = await pool.getConnection();
-    await conn.beginTransaction();
-    let sql = "";
-    sql = "SELECT * FROM emails WHERE email = ?";
-    const [rows] = await conn.query(sql, [email]);
-    if (rows.length) {
-      await conn.rollback();
-      return returnJSON(1, {
-        msg: "duplicate",
-      });
-    }
+    // conn = await pool.getConnection();
+    // await conn.beginTransaction();
+    // let sql = "";
+    // sql = "SELECT * FROM emails WHERE email = ?";
+    // const [rows] = await conn.query(sql, [email]);
+    // if (rows.length) {
+    //   await conn.rollback();
+    //   return returnJSON(1, {
+    //     msg: "duplicate",
+    //     uuid: rows[0].uuid,
+    //   });
+    // }
 
-    sql = "INSERT INTO emails (email, uuid) VALUES(?,?)";
-    const uuid = uuidV4();
-    const [result] = await conn.execute(sql, [email, uuid]);
-    if (result.insertId) {
-      const { FRONT_URL } = process.env;
-      await axios.post(`https://admission.chmsu.edu.ph/api/sendEmail.php`, {
-        email,
-        uuid,
-        frontURL: FRONT_URL,
-      });
-      await conn.commit();
-      // const template = await fs.readFile(
-      //   path.join(__dirname, "../templates/emailTemplate.html"),
-      //   "utf8"
-      // );
-      // let html = template.replace(/UUID/g, uuid);
-      // html = html.replace(/APIURL/g, FRONT_URL);
-      // await sendMail({
-      //   to: email,
-      //   subject: "CHMSU Admission AY 2024-2025",
-      //   html,
-      // });
-
-      return returnJSON(1, {
-        insertId: result.insertId,
-        uuid,
-      });
-    }
+    // sql = "INSERT INTO emails (email, uuid) VALUES(?,?)";
+    // const uuid = uuidV4();
+    // const [result] = await conn.execute(sql, [email, uuid]);
+    // if (result.insertId) {
+    //   // const { FRONT_URL } = process.env;
+    //   // await axios.post(`https://admission.chmsu.edu.ph/api/sendEmail.php`, {
+    //   //   email,
+    //   //   uuid,
+    //   //   frontURL: FRONT_URL,
+    //   // });
+    //   await conn.commit();
+    // }
+    return returnJSON(1, {});
   } catch (error) {
     await conn.rollback();
     logger.error({ ...error, from: "[registerEmail]" });
@@ -115,7 +101,33 @@ const getEmailByCode = async (code) => {
   }
 };
 
+const getEmailWithNoEntries = async () => {
+  const conn = await pool.getConnection();
+  try {
+    let sql = "";
+    sql = "SELECT * FROM emails WHERE email NOT IN (SELECT email FROM entries)";
+    const [rows] = await conn.query(sql);
+
+    for (const row of rows) {
+      const { FRONT_URL } = process.env;
+      await axios.post(`https://admission.chmsu.edu.ph/api/sendEmail.php`, {
+        email: row.email,
+        uuid: row.uuid,
+        frontURL: FRONT_URL,
+      });
+    }
+  } catch (error) {
+    logger.error("[getEmailWithNoEntries]", error);
+    return returnJSON(0, {
+      error,
+    });
+  } finally {
+    conn.release();
+  }
+};
+
 module.exports = {
   registerEmail,
   getEmailByCode,
+  getEmailWithNoEntries,
 };
