@@ -5,6 +5,8 @@ const logger = require("../logs/logger");
 const { returnJSON } = require("../utils/normalizeReturn");
 const sharp = require("sharp");
 const dayjs = require("dayjs");
+const { v4: uuidV4 } = require("uuid");
+const { registerEmail } = require("./email");
 const compressFiles = async (files) => {
   try {
     const picture = files.picture[0];
@@ -37,12 +39,13 @@ const saveData = async (formData, slot) => {
       campus,
       program,
       examCenter,
+      isReserved,
     } = formData;
     let sql = "";
     sql = `INSERT INTO 
                   entries(LRN, givenName,middleName, lastName, sexAtBirth, birthDate,
-                  phoneNumber, email, campus, program, examCenter, slotID)
-                  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  phoneNumber, email, campus, program, examCenter, slotID, isReserved)
+                  VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           `;
     let values = [];
     values = [
@@ -58,6 +61,7 @@ const saveData = async (formData, slot) => {
       program,
       examCenter,
       slotID,
+      isReserved || 1,
     ];
     await conn.execute(sql, values);
   } catch (error) {
@@ -276,6 +280,30 @@ module.exports.editEntry = async (body) => {
     logger.error("[editEntry]", error);
     return returnJSON(0, {
       error: `[editEntry]: ${error.message}`,
+    });
+  } finally {
+    if (conn) conn.release();
+  }
+};
+module.exports.addWalkInEntry = async (formData) => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const slot = await selectSlot(formData);
+    if (slot.msg === "noSlot") {
+      return slot;
+    }
+    formData.isReserved = 2;
+    formData.email = uuidV4();
+    await saveData(formData, slot);
+    await registerEmail(formData.email, true);
+    return returnJSON(1, {
+      slot,
+    });
+  } catch (error) {
+    logger.error("[addWalkInEntry]", error);
+    return returnJSON(0, {
+      error: `[addWalkInEntry]: ${error.message}`,
     });
   } finally {
     if (conn) conn.release();

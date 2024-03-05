@@ -6,34 +6,34 @@ const logger = require("../logs/logger");
 const { returnJSON } = require("../utils/normalizeReturn");
 const path = require("path");
 const { default: axios } = require("axios");
-const registerEmail = async (email) => {
+const registerEmail = async (email, uuidEmail = false) => {
   let conn;
   try {
-    // conn = await pool.getConnection();
-    // await conn.beginTransaction();
-    // let sql = "";
-    // sql = "SELECT * FROM emails WHERE email = ?";
-    // const [rows] = await conn.query(sql, [email]);
-    // if (rows.length) {
-    //   await conn.rollback();
-    //   return returnJSON(1, {
-    //     msg: "duplicate",
-    //     uuid: rows[0].uuid,
-    //   });
-    // }
+    conn = await pool.getConnection();
+    await conn.beginTransaction();
+    let sql = "";
+    sql = "SELECT * FROM emails WHERE email = ?";
+    const [rows] = await conn.query(sql, [email]);
+    if (rows.length) {
+      await conn.rollback();
+      return returnJSON(1, {
+        msg: "duplicate",
+        uuid: rows[0].uuid,
+      });
+    }
 
-    // sql = "INSERT INTO emails (email, uuid) VALUES(?,?)";
-    // const uuid = uuidV4();
-    // const [result] = await conn.execute(sql, [email, uuid]);
-    // if (result.insertId) {
-    //   // const { FRONT_URL } = process.env;
-    //   // await axios.post(`https://admission.chmsu.edu.ph/api/sendEmail.php`, {
-    //   //   email,
-    //   //   uuid,
-    //   //   frontURL: FRONT_URL,
-    //   // });
-    //   await conn.commit();
-    // }
+    sql = "INSERT INTO emails (email, uuid) VALUES(?,?)";
+    const uuid = uuidV4();
+    const [result] = await conn.execute(sql, [email, uuidEmail ? email : uuid]);
+    if (result.insertId) {
+      // const { FRONT_URL } = process.env;
+      // await axios.post(`https://admission.chmsu.edu.ph/api/sendEmail.php`, {
+      //   email,
+      //   uuid,
+      //   frontURL: FRONT_URL,
+      // });
+      await conn.commit();
+    }
     return returnJSON(1, {});
   } catch (error) {
     await conn.rollback();

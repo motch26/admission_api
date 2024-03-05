@@ -8,6 +8,7 @@ const {
   getEntryInfo,
   getEntries,
   editEntry,
+  addWalkInEntry,
 } = require("../handlers/entry");
 
 router.post("/registerUser", async (req, res, next) => {
@@ -40,6 +41,11 @@ router.get("/getEntries", async (req, res, next) => {
 });
 router.post("/editEntry", async (req, res, next) => {
   const resp = await editEntry(req.body);
+  if (resp.status === 200) res.json(resp).status(resp.status);
+  else next(resp.error);
+});
+router.post("/addWalkInEntry", async (req, res, next) => {
+  const resp = await addWalkInEntry(req.body);
   if (resp.status === 200) res.json(resp).status(resp.status);
   else next(resp.error);
 });
