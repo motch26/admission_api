@@ -71,7 +71,7 @@ const saveData = async (formData, slot) => {
   }
 };
 const selectSlot = async (formData) => {
-  const { examCenter } = formData;
+  const { examCenter, isReserved, selectedSlot } = formData;
   const map = [
     {
       name: "Talisay",
@@ -93,11 +93,22 @@ const selectSlot = async (formData) => {
   const code = map.find((center) => center.name === examCenter).code;
   let conn;
   try {
+    /**
+     * TODO:
+     *      1. For walk-ins, allow them to select a slot even if it's full
+     *      2. Disable cancelling of entries same day as the exam and the days before
+     *      3.
+     *
+     */
     conn = await pool.getConnection();
-    let sql = `SELECT * FROM slots WHERE slotID LIKE '${code}%' AND slotsLeft != 0 ORDER BY slotID ASC LIMIT 1 `;
+    const condition =
+      isReserved === 2
+        ? `= '${selectedSlot}'`
+        : `LIKE '${code}%' AND slotsLeft != 0`;
+    let sql = `SELECT * FROM slots WHERE slotID ${condition} ORDER BY slotID ASC LIMIT 1 `;
     let [rows] = await conn.query(sql);
     if (rows.length) {
-      const { slotID, timeSlot, venueID, slotsLeft } = rows[0];
+      const { slotID, timeSlot, venueID } = rows[0];
       const slot = {
         slotID,
         timeSlot,
@@ -262,15 +273,12 @@ module.exports.getEntries = async (campus) => {
   }
 };
 module.exports.editEntry = async (body) => {
-  const { email, slotID } = body;
+  const { email } = body;
   let conn;
   try {
     conn = await pool.getConnection();
 
-    let sql = `UPDATE slots SET slotsLeft = slotsLeft + 1 WHERE slotID = ?`;
-    await conn.execute(sql, [slotID]);
-
-    sql = `UPDATE entries SET isReserved = 0 WHERE email = ?`;
+    let sql = `UPDATE entries SET isReserved = 0 WHERE email = ?`;
     await conn.query(sql, [email]);
 
     return returnJSON(1, {
@@ -289,12 +297,12 @@ module.exports.addWalkInEntry = async (formData) => {
   let conn;
   try {
     conn = await pool.getConnection();
+    formData.isReserved = 2;
+    formData.email = uuidV4();
     const slot = await selectSlot(formData);
     if (slot.msg === "noSlot") {
       return slot;
     }
-    formData.isReserved = 2;
-    formData.email = uuidV4();
     await saveData(formData, slot);
     await registerEmail(formData.email, true);
     return returnJSON(1, {
