@@ -320,7 +320,7 @@ module.exports.addWalkInEntry = async (formData) => {
       return slot;
     }
     await saveData(formData, slot);
-    await registerEmail(formData.email, true);
+    await registerEmail(formData.email, 2, true);
     return returnJSON(1, {
       slot,
     });

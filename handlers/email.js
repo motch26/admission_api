@@ -6,10 +6,15 @@ const logger = require("../logs/logger");
 const { returnJSON } = require("../utils/normalizeReturn");
 const path = require("path");
 const { default: axios } = require("axios");
-const registerEmail = async (email, uuidEmail = false) => {
+const registerEmail = async (email, v, uuidEmail = false) => {
   let conn;
   try {
     conn = await pool.getConnection();
+    if (v !== 2) {
+      return returnJSON(1, {
+        msg: "refresh",
+      });
+    }
     await conn.beginTransaction();
     let sql = "";
     sql = "SELECT * FROM emails WHERE email = ?";

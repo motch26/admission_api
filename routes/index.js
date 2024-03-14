@@ -1,5 +1,5 @@
 const express = require("express");
-const { registerEmail, getEmailByCode } = require("../handlers/email");
+const { registerEmail } = require("../handlers/email");
 const router = express.Router();
 const upload = require("../utils/multer");
 var logger = require("../logs/logger");
@@ -14,8 +14,8 @@ const {
 } = require("../handlers/entry");
 
 router.post("/registerUser", async (req, res, next) => {
-  const { email } = req.body;
-  const resp = await registerEmail(email);
+  const { email, v } = req.body;
+  const resp = await registerEmail(email, v);
   if (resp.status === 200) res.json(resp).status(resp.status);
   else next(resp.error);
 });
