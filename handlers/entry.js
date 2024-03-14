@@ -358,3 +358,27 @@ module.exports.getProgramSlots = async () => {
     if (conn) conn.release();
   }
 };
+
+module.exports.getTotalEmails = async () => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const sql = `SELECT COUNT(*) AS rowCount 
+                  FROM emails
+                  WHERE timestamp >= CONCAT(CURRENT_DATE(), ' 08:00:00') 
+                  AND timestamp <= CONCAT(CURRENT_DATE(), ' 17:30:00');`;
+    const [rows] = await conn.query(sql);
+    if (rows.length) {
+      return returnJSON(1, {
+        count: rows[0].rowCount,
+      });
+    }
+  } catch (error) {
+    logger.error("[getTotalEmails]", error);
+    return returnJSON(0, {
+      error: `[getProggetTotalEmailsramSlots]: ${error}`,
+    });
+  } finally {
+    if (conn) conn.release();
+  }
+};
