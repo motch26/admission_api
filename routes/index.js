@@ -9,6 +9,7 @@ const {
   getEntries,
   editEntry,
   addWalkInEntry,
+  getProgramSlots,
 } = require("../handlers/entry");
 
 router.post("/registerUser", async (req, res, next) => {
@@ -46,6 +47,11 @@ router.post("/editEntry", async (req, res, next) => {
 });
 router.post("/addWalkInEntry", async (req, res, next) => {
   const resp = await addWalkInEntry(req.body);
+  if (resp.status === 200) res.json(resp).status(resp.status);
+  else next(resp.error);
+});
+router.get("/getProgramSlots", async (req, res, next) => {
+  const resp = await getProgramSlots();
   if (resp.status === 200) res.json(resp).status(resp.status);
   else next(resp.error);
 });

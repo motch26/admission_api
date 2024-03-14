@@ -7,6 +7,7 @@ const sharp = require("sharp");
 const dayjs = require("dayjs");
 const { v4: uuidV4 } = require("uuid");
 const { registerEmail } = require("./email");
+
 const compressFiles = async (files) => {
   try {
     const picture = files.picture[0];
@@ -71,7 +72,7 @@ const saveData = async (formData, slot) => {
   }
 };
 const selectSlot = async (formData) => {
-  const { examCenter, isReserved, selectedSlot } = formData;
+  const { examCenter, isReserved, selectedSlot, strategy, program } = formData;
   const map = [
     {
       name: "Talisay",
@@ -90,7 +91,7 @@ const selectSlot = async (formData) => {
       code: "FT",
     },
   ];
-  const code = map.find((center) => center.name === examCenter).code;
+  let code = map.find((center) => center.name === examCenter).code;
   let conn;
   try {
     /**
@@ -101,12 +102,27 @@ const selectSlot = async (formData) => {
      *
      */
     conn = await pool.getConnection();
+    /**  slot segregation strategy
+        1.  Search for latest slot with vacancy
+         `LIKE '${code}%' AND slotsLeft != 0`
+        2.  Search  by specific program slot
+
+    */
+    let sql = "";
+    let rows = [];
+    if (strategy && strategy === "programSlot") {
+      sql = `SELECT slotID FROM slots WHERE full = LOWER(?) AND slotID LIKE '${code}%'`;
+      [rows] = await conn.query(sql, [program.toLowerCase()]);
+      if (rows.length) {
+        code = rows[0].slotID;
+      }
+    }
     const condition =
       isReserved === 2
         ? `= '${selectedSlot}'`
-        : `LIKE '${code}%' AND slotsLeft != 0`;
-    let sql = `SELECT * FROM slots WHERE slotID ${condition} ORDER BY slotID ASC LIMIT 1 `;
-    let [rows] = await conn.query(sql);
+        : `LIKE '${code}%' AND slotsLeft != 0 `; // supply strategy here
+    sql = `SELECT * FROM slots WHERE slotID ${condition} ORDER BY slotID ASC LIMIT 1 `;
+    [rows] = await conn.query(sql);
     if (rows.length) {
       const { slotID, timeSlot, venueID } = rows[0];
       const slot = {
@@ -312,6 +328,31 @@ module.exports.addWalkInEntry = async (formData) => {
     logger.error("[addWalkInEntry]", error);
     return returnJSON(0, {
       error: `[addWalkInEntry]: ${error.message}`,
+    });
+  } finally {
+    if (conn) conn.release();
+  }
+};
+
+module.exports.getProgramSlots = async () => {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const sql = "SELECT * FROM SLOTS WHERE slotsLeft > 0";
+    const [rows] = await conn.query(sql);
+    if (rows.length) {
+      return returnJSON(1, {
+        slots: rows,
+      });
+    } else {
+      return returnJSON(1, {
+        msg: "noSlots",
+      });
+    }
+  } catch (error) {
+    logger.error("[getProgramSlots]", error);
+    return returnJSON(0, {
+      error: `[getProgramSlots]: ${error}`,
     });
   } finally {
     if (conn) conn.release();
