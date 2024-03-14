@@ -338,7 +338,7 @@ module.exports.getProgramSlots = async () => {
   let conn;
   try {
     conn = await pool.getConnection();
-    const sql = "SELECT * FROM SLOTS WHERE slotsLeft > 0";
+    const sql = "SELECT * FROM slots WHERE slotsLeft > 0";
     const [rows] = await conn.query(sql);
     if (rows.length) {
       return returnJSON(1, {
