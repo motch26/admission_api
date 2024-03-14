@@ -369,7 +369,9 @@ module.exports.getTotalEmails = async () => {
                   AND timestamp <= CONCAT(CURRENT_DATE(), ' 17:30:00');`;
     const [rows] = await conn.query(sql);
     if (rows.length) {
-      const [timeRow] = await conn.query("SELECT NOW() as currentTime");
+      const [timeRow] = await conn.query(
+        "SELECT CURRENT_TIMESTAMP as currentTime"
+      );
       return returnJSON(1, {
         count: rows[0].rowCount,
         time: timeRow[0].currentTime,
