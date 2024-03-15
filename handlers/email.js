@@ -11,6 +11,7 @@ const registerEmail = async (email, v, uuidEmail = false) => {
   let conn;
   try {
     conn = await pool.getConnection();
+    await conn.beginTransaction();
     if (v !== 2) {
       return returnJSON(1, {
         msg: "refresh",
@@ -23,7 +24,6 @@ const registerEmail = async (email, v, uuidEmail = false) => {
         msg: "full",
       });
     }
-    await conn.beginTransaction();
     let sql = "";
     sql = `SELECT COUNT(*) as count
           FROM emails
