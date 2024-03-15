@@ -6,6 +6,7 @@ const logger = require("../logs/logger");
 const { returnJSON } = require("../utils/normalizeReturn");
 const path = require("path");
 const { default: axios } = require("axios");
+const dayjs = require("dayjs");
 const registerEmail = async (email, v, uuidEmail = false) => {
   let conn;
   try {
@@ -13,6 +14,13 @@ const registerEmail = async (email, v, uuidEmail = false) => {
     if (v !== 2) {
       return returnJSON(1, {
         msg: "refresh",
+      });
+    }
+    const isClose = dayjs().hour() < 8 || dayjs().hour() > 17;
+    if (isClose) {
+      await conn.rollback();
+      return returnJSON(1, {
+        msg: "full",
       });
     }
     await conn.beginTransaction();
