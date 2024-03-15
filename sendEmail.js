@@ -94,8 +94,11 @@ const sendEmailWithUpdates = async () => {
   // emails.push({ email: "motch26@gmail.com", uuid: "new" });
   // const extractedEmails = emails.slice(0, 5000);
   for (const email of emails) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
     await triggerEmail(email);
     console.log("email sent to", email.email);
   }
   console.log("Done");
+  return;
 })();

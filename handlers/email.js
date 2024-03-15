@@ -17,8 +17,20 @@ const registerEmail = async (email, v, uuidEmail = false) => {
     }
     await conn.beginTransaction();
     let sql = "";
+    sql = `SELECT COUNT(*) as count
+          FROM emails
+          WHERE timestamp >= CONCAT(CURRENT_DATE(), ' 08:00:00') 
+            AND timestamp <= CONCAT(CURRENT_DATE(), ' 17:00:00');`;
+    const [countRow] = await conn.query(sql);
+    if (countRow[0].count >= 500) {
+      await conn.rollback();
+      return returnJSON(1, {
+        msg: "full",
+      });
+    }
     sql = "SELECT * FROM emails WHERE email = ?";
     const [rows] = await conn.query(sql, [email]);
+
     if (rows.length) {
       await conn.rollback();
       return returnJSON(1, {
