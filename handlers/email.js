@@ -30,7 +30,7 @@ const registerEmail = async (email, v, uuidEmail = false) => {
           WHERE timestamp >= CONCAT(CURRENT_DATE(), ' 08:00:00') 
             AND timestamp <= CONCAT(CURRENT_DATE(), ' 17:00:00');`;
     const [countRow] = await conn.query(sql);
-    if (countRow[0].count >= 500) {
+    if (countRow[0].count >= 187) {
       await conn.rollback();
       return returnJSON(1, {
         msg: "full",
